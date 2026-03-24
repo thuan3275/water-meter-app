@@ -140,13 +140,16 @@
     async function loadTable(sheetName) {
       const content = document.getElementById('content');
       content.innerHTML = `<p>Đang tải ${config[sheetName].title}...</p>`;
-
+    
       try {
-        const res = await fetch(`${SCRIPT_URL}?action=getData&sheet=${sheetName}`, {
+        const url = `${SCRIPT_URL}?action=getData&sheet=${sheetName}`;
+        const res = await fetch(url, {
           method: 'GET',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' }
         });
-
+    
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    
         const result = await res.json();
         const data = result.data || result;
 
@@ -178,8 +181,8 @@
 
         content.innerHTML = html;
       } catch (err) {
-        content.innerHTML = `<p style="color:red;">Lỗi tải dữ liệu: ${err.message}</p>`;
         console.error(err);
+        content.innerHTML = `<p style="color:red;">Lỗi tải dữ liệu: ${err.message}</p>`;
       }
     }
 
@@ -227,27 +230,28 @@
       const action = currentEditRowIndex === null ? 'addRow' : 'updateRow';
 
       try {
-        const res = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({
-            action: action,
-            sheet: currentSheet,
-            rowData: rowData,
-            rowIndex: currentEditRowIndex
-          })
-        });
-
-        const result = await res.json();
-        if (result.success) {
-          alert('✅ Lưu thành công!');
-          closeModal();
-          loadTable(currentSheet);
-        } else {
-          alert('❌ Lỗi: ' + (result.error || 'Không xác định'));
+          const res = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: currentEditRowIndex === null ? 'addRow' : 'updateRow',
+              sheet: currentSheet,
+              rowData: rowData,
+              rowIndex: currentEditRowIndex
+            })
+          });
+      
+          const result = await res.json();
+          if (result.success) {
+            alert('✅ Lưu thành công!');
+            closeModal();
+            loadTable(currentSheet);
+          } else {
+            alert('❌ ' + (result.error || 'Lỗi không xác định'));
+          }
+        } catch (err) {
+          alert('Lỗi kết nối: ' + err.message);
         }
-      } catch (err) {
-        alert('Lỗi kết nối: ' + err.message);
       }
     }
 
