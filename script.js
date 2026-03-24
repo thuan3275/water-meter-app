@@ -1,5 +1,6 @@
 // ==================== CẤU HÌNH ====================
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJqikHXE37mOQKe89JaZlzkJ9zDAva0M6PC4eapGAFhOsMrxBhiiSl282pQBNg63-T7w/exec'; 
+const SCRIPT_ID = 'AKfycbwO8xDxFJ-XDIWm0OOjqc9VVS50Ohf6LYDvf85gkCX_YY18uSmB0XWh-AkKfmnbqlQtRg';
+const SCRIPT_URL = 'https://script.google.com/macros/s/'+ SCRIPT_ID +'/exec'; 
 // ← THAY BẰNG LINK WEB APP THỰC TẾ
 
 let videoStream = null;
