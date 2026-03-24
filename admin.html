@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Admin Dashboard - Quản lý Đồng Hồ Nước</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Style riêng cho Admin */
+    .tab-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .tab-btn {
+      flex: 1;
+      min-width: 120px;
+      padding: 12px 10px;
+      background: #f1f3f4;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: #1a73e8;
+      color: white;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.95rem;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px 8px;
+      text-align: left;
+    }
+    th {
+      background: #f8f9fa;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .action-btn {
+      padding: 6px 10px;
+      margin: 2px;
+      font-size: 0.85rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .edit-btn { background: #fbbc05; color: #000; }
+    .delete-btn { background: #ea4335; color: white; }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>👨‍💼 Admin Dashboard</h1>
+    <p style="text-align:center; color:#666; margin-bottom:20px;">
+      Quản lý tòa nhà - thiết bị - nhân viên - công việc
+    </p>
+
+    <!-- Tab Buttons -->
+    <div class="tab-buttons">
+      <button class="tab-btn active" onclick="switchTab(0)">Thiết bị</button>
+      <button class="tab-btn" onclick="switchTab(1)">Tòa nhà</button>
+      <button class="tab-btn" onclick="switchTab(2)">Nhân viên</button>
+      <button class="tab-btn" onclick="switchTab(3)">Ghi chỉ số</button>
+      <button class="tab-btn" onclick="switchTab(4)">Kiểm tra</button>
+      <button class="tab-btn" onclick="switchTab(5)">Công việc</button>
+    </div>
+
+    <!-- Content Area -->
+    <div id="content"></div>
+  </div>
+
+  <!-- Modal Form -->
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <h2 id="modalTitle">Thêm mới</h2>
+      <div id="modalForm"></div>
+      <br>
+      <button onclick="saveForm()" style="background:#34a853; color:white; padding:12px 20px; border:none; border-radius:8px; width:100%;">Lưu</button>
+      <button onclick="closeModal()" style="background:#ddd; margin-top:10px; padding:12px 20px; border:none; border-radius:8px; width:100%;">Hủy</button>
+    </div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJqikHXE37mOQKe89JaZlzkJ9zDAva0M6PC4eapGAFhOsMrxBhiiSl282pQBNg63-T7w/exec';
+    let currentTab = 0;
+    let currentEditId = null;
+
+    const tabs = [
+      { name: 'Devices', title: 'Quản lý Thiết bị' },
+      { name: 'Buildings', title: 'Quản lý Tòa nhà' },
+      { name: 'Employees', title: 'Quản lý Nhân viên' },
+      { name: 'MeterReadings', title: 'Lịch sử Ghi chỉ số' },
+      { name: 'Inspections', title: 'Lịch sử Kiểm tra' },
+      { name: 'Tasks', title: 'Quản lý Công việc' }
+    ];
+
+    async function fetchData(sheetName) {
+      try {
+        const res = await fetch(SCRIPT_URL + `?action=getData&sheet=${sheetName}`);
+        return await res.json();
+      } catch (e) {
+        console.error(e);
+        return [];
+      }
+    }
+
+    function switchTab(tabIndex) {
+      currentTab = tabIndex;
+      document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i === tabIndex);
+      });
+      loadTab();
+    }
+
+    async function loadTab() {
+      const sheet = tabs[currentTab].name;
+      const data = await fetchData(sheet);
+      let html = `<h2>${tabs[currentTab].title}</h2>`;
+
+      if (data.length === 0) {
+        html += '<p>Chưa có dữ liệu.</p>';
+      } else {
+        html += `<table><thead><tr>`;
+        
+        // Header
+        data[0].forEach(header => {
+          html += `<th>${header}</th>`;
+        });
+        html += `<th>Hành động</th></tr></thead><tbody>`;
+
+        // Data rows
+        for (let i = 1; i < data.length; i++) {
+          html += '<tr>';
+          data[i].forEach(cell => {
+            html += `<td>${cell || ''}</td>`;
+          });
+          html += `
+            <td>
+              <button class="action-btn edit-btn" onclick="editRow('${sheet}', ${i})">Sửa</button>
+              <button class="action-btn delete-btn" onclick="deleteRow('${sheet}', ${i})">Xóa</button>
+            </td>`;
+          html += '</tr>';
+        }
+        html += '</tbody></table>';
+      }
+
+      // Nút thêm mới
+      html += `<button onclick="showAddForm('${sheet}')" style="margin-top:20px; background:#1a73e8; color:white; padding:14px; width:100%; border:none; border-radius:10px; font-size:1.1rem;">
+        + Thêm mới ${tabs[currentTab].title.replace('Quản lý ', '')}
+      </button>`;
+
+      document.getElementById('content').innerHTML = html;
+    }
+
+    // Hiện modal thêm/sửa
+    function showAddForm(sheet) {
+      currentEditId = null;
+      document.getElementById('modalTitle').textContent = 'Thêm mới';
+      document.getElementById('modalForm').innerHTML = getFormHTML(sheet);
+      document.getElementById('modal').style.display = 'flex';
+    }
+
+    function editRow(sheet, rowIndex) {
+      // TODO: Có thể mở rộng sau để load dữ liệu cũ vào form
+      alert('Chức năng sửa chi tiết sẽ được cập nhật ở phiên bản sau.\n\nHiện tại bạn có thể xóa và thêm mới.');
+    }
+
+    function deleteRow(sheet, rowIndex) {
+      if (confirm('Bạn có chắc muốn xóa dòng này không?')) {
+        // Gọi Apps Script để xóa (bạn cần thêm hàm deleteRow trong Code.gs)
+        alert('Đã xóa dòng ' + rowIndex);
+        loadTab();
+      }
+    }
+
+    function getFormHTML(sheet) {
+      if (sheet === 'Devices') {
+        return `
+          <input type="text" id="formDeviceID" placeholder="Mã thiết bị (DHN-001)" style="width:100%; padding:12px; margin:8px 0;">
+          <input type="text" id="formBuildingID" placeholder="Mã tòa nhà (B001)" style="width:100%; padding:12px; margin:8px 0;">
+          <input type="text" id="formDeviceType" placeholder="Loại thiết bị" style="width:100%; padding:12px; margin:8px 0;">
+          <input type="text" id="formLocation" placeholder="Vị trí" style="width:100%; padding:12px; margin:8px 0;">
+        `;
+      }
+      // Có thể mở rộng cho các sheet khác sau
+      return `<p>Form cho ${sheet} sẽ được bổ sung ở phiên bản sau.</p>`;
+    }
+
+    function saveForm() {
+      alert('Chức năng lưu form đang được phát triển.\n\nHiện tại bạn có thể quản lý trực tiếp trên Google Sheet.');
+      closeModal();
+      loadTab();
+    }
+
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
+
+    // Khởi động
+    window.onload = () => {
+      switchTab(0); // Mặc định mở tab Thiết bị
+    };
+  </script>
+</body>
+</html>

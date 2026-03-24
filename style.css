@@ -1,0 +1,116 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f8f9fa;
+  color: #333;
+  padding-bottom: 100px;
+}
+
+.container {
+  max-width: 100%;
+  padding: 15px;
+  margin: 0 auto;
+}
+
+h1 {
+  text-align: center;
+  color: #1a73e8;
+  margin: 20px 0 25px;
+  font-size: 1.45rem;
+}
+
+video, #preview {
+  width: 100%;
+  border-radius: 12px;
+  background: #000;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+#preview {
+  margin: 15px 0;
+  border: 3px solid #1a73e8;
+  display: none;
+}
+
+.form-group {
+  margin: 20px 0;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #444;
+}
+
+select, input[type="text"] {
+  width: 100%;
+  padding: 14px 12px;
+  font-size: 1.05rem;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  background: white;
+}
+
+select:focus, input:focus {
+  border-color: #1a73e8;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(26,115,232,0.15);
+}
+
+button {
+  width: 100%;
+  padding: 16px;
+  margin: 12px 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+#captureBtn {
+  background: #1a73e8;
+  color: white;
+}
+
+#saveBtn {
+  background: #34a853;
+  color: white;
+  font-size: 1.25rem;
+}
+
+#saveBtn:disabled {
+  background: #a8d7b8;
+  cursor: not-allowed;
+}
+
+#status {
+  text-align: center;
+  padding: 14px;
+  border-radius: 10px;
+  margin: 15px 0;
+  font-weight: 500;
+  min-height: 24px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  h1 { font-size: 1.3rem; }
+  .container { padding: 12px 10px; }
+}
+
+/* GPS Info */
+.gps-info {
+  background: #e8f0fe;
+  padding: 12px;
+  border-radius: 10px;
+  margin: 15px 0;
+  font-size: 0.95rem;
+  border-left: 5px solid #1a73e8;
+}
+
+.gps-info small {
+  color: #666;
+}

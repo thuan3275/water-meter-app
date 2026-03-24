@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ghi Nhận Đồng Hồ Nước</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/tesseract.js@v5.1.1/dist/tesseract.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Ghi nhận chỉ số đồng hồ nước</h1>
+    
+    <video id="video" autoplay playsinline></video>
+    
+    <button id="captureBtn">📸 Chụp ảnh & Lấy GPS</button>
+    
+    <canvas id="canvas" style="display: none;"></canvas>
+    
+    <img id="preview" alt="Ảnh chụp">
+
+    <div class="form-group">
+      <label for="deviceSelect">Thiết bị:</label>
+      <select id="deviceSelect">
+        <option value="">Đang tải danh sách...</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="meterInput">Chỉ số đồng hồ:</label>
+      <input type="text" id="meterInput" placeholder="Chỉ số tự nhận diện hoặc nhập tay" inputmode="decimal">
+    </div>
+
+    <div class="gps-info" id="gpsInfo">
+      📍 Vị trí: Đang lấy GPS...
+    </div>
+
+    <button id="saveBtn" disabled>💾 Lưu dữ liệu (có GPS)</button>
+
+    <p id="status"></p>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
