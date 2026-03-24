@@ -150,8 +150,10 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
   try {
     const res = await fetch(SCRIPT_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      headers: {
+      'Content-Type': 'text/plain;charset=utf-8'   // ← Thay đổi quan trọng
+      },
+      body: JSON.stringify(payload)   // vẫn giữ nguyên body là JSON
     });
 
     const result = await res.json();
