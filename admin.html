@@ -1,3 +1,7 @@
+<!--- 
+  const SCRIPT_ID = 'AKfycbwJqikHXE37mOQKe89JaZlzkJ9zDAva0M6PC4eapGAFhOsMrxBhiiSl282pQBNg63-T7w'; 
+  const SCRIPT_URL = 'https://script.google.com/macros/s/' + SCRIPT_ID +'/exec'; 
+--->
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -6,267 +10,224 @@
   <title>Admin Dashboard - Quản lý Đồng Hồ Nước</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    .tab-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin: 15px 0;
-    }
+    .tab-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; }
     .tab-btn {
-      flex: 1;
-      min-width: 110px;
-      padding: 12px 8px;
-      background: #f1f3f4;
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 0.95rem;
-      cursor: pointer;
+      flex: 1; min-width: 110px; padding: 12px 8px; background: #f1f3f4;
+      border: none; border-radius: 8px; font-weight: 600; cursor: pointer;
     }
-    .tab-btn.active {
-      background: #1a73e8;
-      color: white;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.92rem;
-      margin-top: 10px;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 10px 6px;
-      text-align: left;
-      vertical-align: top;
-    }
-    th {
-      background: #f8f9fa;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    .action-btn {
-      padding: 6px 10px;
-      margin: 2px;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
-    .edit-btn   { background: #fbbc05; color: #000; }
+    .tab-btn.active { background: #1a73e8; color: white; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-top: 10px; }
+    th, td { border: 1px solid #ddd; padding: 10px 6px; text-align: left; }
+    th { background: #f8f9fa; position: sticky; top: 0; z-index: 10; }
+    .action-btn { padding: 6px 10px; margin: 2px; border: none; border-radius: 6px; font-size: 0.85rem; cursor: pointer; }
+    .edit-btn { background: #fbbc05; color: #000; }
     .delete-btn { background: #ea4335; color: white; }
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.75);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-    }
-    .modal-content {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      width: 92%;
-      max-width: 520px;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    .form-group label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: 600;
-    }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-content { background: white; padding: 20px; border-radius: 12px; width: 92%; max-width: 520px; max-height: 92vh; overflow-y: auto; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #333; }
     .form-group input, .form-group select, .form-group textarea {
-      width: 100%;
-      padding: 12px;
-      border: 2px solid #ddd;
-      border-radius: 8px;
-      font-size: 1rem;
+      width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem;
     }
+    .form-group input:focus, .form-group select:focus { border-color: #1a73e8; outline: none; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>👨‍💼 Admin Dashboard</h1>
-    <p style="text-align:center; color:#555; margin-bottom:15px;">
-      Quản lý toàn bộ hệ thống đồng hồ nước
-    </p>
-
-    <!-- Tab -->
     <div class="tab-buttons" id="tabButtons"></div>
-
-    <!-- Nội dung bảng -->
     <div id="content"></div>
   </div>
 
-  <!-- Modal Form -->
+  <!-- Modal -->
   <div class="modal" id="modal">
     <div class="modal-content">
       <h2 id="modalTitle">Thêm mới</h2>
       <div id="modalForm"></div>
       <br>
-      <button onclick="saveRecord()" style="background:#34a853; color:white; padding:14px; width:100%; border:none; border-radius:10px; font-size:1.1rem;">Lưu</button>
+      <button onclick="saveRecord()" style="background:#34a853; color:white; padding:14px; width:100%; border:none; border-radius:10px; font-size:1.1rem;">💾 Lưu</button>
       <button onclick="closeModal()" style="background:#ddd; margin-top:10px; padding:14px; width:100%; border:none; border-radius:10px;">Hủy</button>
     </div>
   </div>
 
   <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJqikHXE37mOQKe89JaZlzkJ9zDAva0M6PC4eapGAFhOsMrxBhiiSl282pQBNg63-T7w/exec'; 
-    // ← THAY BẰNG LINK WEB APP THỰC TẾ CỦA BẠN
+    const SCRIPT_ID = 'AKfycbwJqikHXE37mOQKe89JaZlzkJ9zDAva0M6PC4eapGAFhOsMrxBhiiSl282pQBNg63-T7w'; 
+    const SCRIPT_URL = 'https://script.google.com/macros/s/' + SCRIPT_ID +'/exec';
+    // ← THAY BẰNG LINK WEB APP THỰC TẾ
 
     let currentSheet = '';
     let currentEditRowIndex = null;
 
-    const sheetsConfig = [
-      { name: 'Devices',       title: 'Thiết bị',       icon: '📟' },
-      { name: 'Buildings',     title: 'Tòa nhà',        icon: '🏢' },
-      { name: 'Employees',     title: 'Nhân viên',      icon: '👤' },
-      { name: 'MeterReadings', title: 'Ghi chỉ số',     icon: '📊' },
-      { name: 'Inspections',   title: 'Kiểm tra',       icon: '🔧' },
-      { name: 'Tasks',         title: 'Công việc',      icon: '✅' }
-    ];
+    const config = {
+      Devices: {
+        title: "Thiết bị",
+        fields: [
+          { key: "deviceID", label: "Mã thiết bị", type: "text", required: true, placeholder: "DHN-001" },
+          { key: "buildingID", label: "Mã tòa nhà", type: "text", required: true, placeholder: "B001" },
+          { key: "deviceType", label: "Loại thiết bị", type: "text", required: true, placeholder: "Đồng hồ nước sinh hoạt" },
+          { key: "location", label: "Vị trí", type: "text", required: true, placeholder: "Tầng 5 - Căn 502" },
+          { key: "status", label: "Tình trạng", type: "select", options: ["Hoạt động", "Hỏng", "Bảo trì"], required: true }
+        ]
+      },
+      Buildings: {
+        title: "Tòa nhà",
+        fields: [
+          { key: "buildingID", label: "Mã tòa nhà", type: "text", required: true },
+          { key: "buildingName", label: "Tên tòa nhà", type: "text", required: true },
+          { key: "address", label: "Địa chỉ", type: "text", required: true },
+          { key: "totalFloors", label: "Số tầng", type: "number", required: true },
+          { key: "managerName", label: "Người quản lý", type: "text" }
+        ]
+      },
+      Employees: {
+        title: "Nhân viên",
+        fields: [
+          { key: "employeeID", label: "Mã nhân viên", type: "text", required: true },
+          { key: "fullName", label: "Họ và tên", type: "text", required: true },
+          { key: "phone", label: "Số điện thoại", type: "text", required: true },
+          { key: "email", label: "Email", type: "email" },
+          { key: "role", label: "Vai trò", type: "select", options: ["Nhân viên ghi chỉ số", "Kỹ thuật viên", "Quản lý tòa nhà", "Bảo vệ"], required: true },
+          { key: "buildingID", label: "Tòa nhà phụ trách", type: "text" }
+        ]
+      },
+      MeterReadings: {
+        title: "Ghi chỉ số",
+        fields: [
+          { key: "readingID", label: "Mã ghi nhận", type: "text", readonly: true },
+          { key: "deviceID", label: "Mã thiết bị", type: "text", required: true },
+          { key: "employeeID", label: "Nhân viên", type: "text", required: true },
+          { key: "meterValue", label: "Chỉ số", type: "number", required: true },
+          { key: "notes", label: "Ghi chú", type: "textarea" }
+        ]
+      },
+      Inspections: {
+        title: "Kiểm tra thiết bị",
+        fields: [
+          { key: "inspectionID", label: "Mã kiểm tra", type: "text", readonly: true },
+          { key: "deviceID", label: "Mã thiết bị", type: "text", required: true },
+          { key: "employeeID", label: "Nhân viên", type: "text", required: true },
+          { key: "deviceStatus", label: "Tình trạng", type: "select", options: ["Tốt", "Cần sửa", "Hỏng"], required: true },
+          { key: "notes", label: "Chi tiết kiểm tra", type: "textarea" }
+        ]
+      },
+      Tasks: {
+        title: "Công việc",
+        fields: [
+          { key: "taskID", label: "Mã công việc", type: "text", readonly: true },
+          { key: "deviceID", label: "Mã thiết bị", type: "text", required: true },
+          { key: "employeeID", label: "Nhân viên thực hiện", type: "text", required: true },
+          { key: "taskType", label: "Loại công việc", type: "select", 
+            options: ["Ghi chỉ số nước", "Ghi chỉ số điện", "Kiểm tra tình trạng", "Bảo trì", "Sửa chữa"], required: true },
+          { key: "dueDate", label: "Hạn hoàn thành", type: "date", required: true },
+          { key: "status", label: "Trạng thái", type: "select", options: ["Chưa làm", "Đang làm", "Hoàn thành"], required: true }
+        ]
+      }
+    };
 
-    // Tạo các tab
     function createTabs() {
       const container = document.getElementById('tabButtons');
       container.innerHTML = '';
-      sheetsConfig.forEach((sheet, index) => {
+      Object.keys(config).forEach(key => {
         const btn = document.createElement('button');
         btn.className = 'tab-btn';
-        btn.innerHTML = `${sheet.icon} ${sheet.title}`;
-        btn.onclick = () => switchTab(sheet.name);
-        if (index === 0) btn.classList.add('active');
+        btn.textContent = `${config[key].title}`;
+        btn.onclick = () => switchTab(key);
         container.appendChild(btn);
       });
     }
 
     async function switchTab(sheetName) {
       currentSheet = sheetName;
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        if (btn.textContent.includes(sheetsConfig.find(s => s.name === sheetName).title)) {
-          btn.classList.add('active');
-        }
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        if (b.textContent === config[sheetName].title) b.classList.add('active');
       });
-      await loadTable();
+      await loadTable(sheetName);
     }
 
-    async function loadTable() {
+    async function loadTable(sheetName) {
       const content = document.getElementById('content');
-      content.innerHTML = `<p>Đang tải dữ liệu ${currentSheet}...</p>`;
+      content.innerHTML = `<p>Đang tải ${config[sheetName].title}...</p>`;
 
       try {
-        const res = await fetch(`${SCRIPT_URL}?action=getData&sheet=${currentSheet}`);
+        const res = await fetch(`${SCRIPT_URL}?action=getData&sheet=${sheetName}`);
         const data = await res.json();
 
-        if (!data || data.length === 0) {
-          content.innerHTML = `<p>Chưa có dữ liệu.</p>`;
-          return;
+        let html = `<h2>${config[sheetName].title}</h2>`;
+        if (data.length < 2) {
+          html += `<p>Chưa có dữ liệu.</p>`;
+        } else {
+          html += `<table><thead><tr>`;
+          data[0].forEach(h => html += `<th>${h}</th>`);
+          html += `<th>Hành động</th></tr></thead><tbody>`;
+
+          for (let i = 1; i < data.length; i++) {
+            html += '<tr>';
+            data[i].forEach(cell => html += `<td>${cell || ''}</td>`);
+            html += `
+              <td>
+                <button class="action-btn edit-btn" onclick="editRecord('${sheetName}', ${i})">Sửa</button>
+                <button class="action-btn delete-btn" onclick="deleteRecord('${sheetName}', ${i})">Xóa</button>
+              </td>`;
+            html += '</tr>';
+          }
+          html += '</tbody></table>';
         }
 
-        let html = `<h2>${sheetsConfig.find(s => s.name === currentSheet).icon} ${sheetsConfig.find(s => s.name === currentSheet).title}</h2>`;
-        html += `<table><thead><tr>`;
-
-        // Header
-        data[0].forEach(h => html += `<th>${h}</th>`);
-        html += `<th>Hành động</th></tr></thead><tbody>`;
-
-        // Dữ liệu
-        for (let i = 1; i < data.length; i++) {
-          html += '<tr>';
-          data[i].forEach(cell => {
-            html += `<td>${cell !== null && cell !== undefined ? cell : ''}</td>`;
-          });
-          html += `
-            <td>
-              <button class="action-btn edit-btn" onclick="editRecord(${i})">Sửa</button>
-              <button class="action-btn delete-btn" onclick="deleteRecord(${i})">Xóa</button>
-            </td>`;
-          html += '</tr>';
-        }
-        html += '</tbody></table>';
-
-        // Nút thêm mới
-        html += `
-          <button onclick="showAddForm()" 
-                  style="margin-top:20px; background:#1a73e8; color:white; padding:15px; width:100%; border:none; border-radius:10px; font-size:1.1rem;">
-            + Thêm mới ${sheetsConfig.find(s => s.name === currentSheet).title}
-          </button>`;
-
+        html += `<button onclick="showAddForm('${sheetName}')" style="margin-top:20px;background:#1a73e8;color:white;padding:15px;width:100%;border:none;border-radius:10px;font-size:1.1rem;">+ Thêm mới ${config[sheetName].title}</button>`;
         content.innerHTML = html;
       } catch (err) {
-        content.innerHTML = `<p style="color:red;">Lỗi tải dữ liệu: ${err.message}</p>`;
+        content.innerHTML = `<p style="color:red;">Lỗi: ${err.message}</p>`;
       }
     }
 
-    function showAddForm() {
+    function showAddForm(sheetName) {
       currentEditRowIndex = null;
-      document.getElementById('modalTitle').textContent = `Thêm mới ${currentSheet}`;
-      document.getElementById('modalForm').innerHTML = generateForm(currentSheet);
+      document.getElementById('modalTitle').textContent = `Thêm mới ${config[sheetName].title}`;
+      document.getElementById('modalForm').innerHTML = generateDynamicForm(sheetName);
       document.getElementById('modal').style.display = 'flex';
     }
 
-    function editRecord(rowIndex) {
+    function editRecord(sheetName, rowIndex) {
       currentEditRowIndex = rowIndex;
-      document.getElementById('modalTitle').textContent = `Sửa ${currentSheet}`;
-      document.getElementById('modalForm').innerHTML = generateForm(currentSheet);
-      // TODO: Load dữ liệu cũ vào form (có thể nâng cao sau)
+      document.getElementById('modalTitle').textContent = `Sửa ${config[sheetName].title}`;
+      document.getElementById('modalForm').innerHTML = generateDynamicForm(sheetName);
+      // Có thể load dữ liệu cũ vào form ở đây (nâng cao sau)
       document.getElementById('modal').style.display = 'flex';
     }
 
-    function deleteRecord(rowIndex) {
-      if (confirm(`Bạn có chắc chắn muốn xóa dòng ${rowIndex} không?`)) {
-        fetch(SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'deleteRow',
-            sheet: currentSheet,
-            rowIndex: rowIndex
-          })
-        })
-        .then(() => loadTable())
-        .catch(err => alert('Lỗi xóa: ' + err.message));
-      }
-    }
-
-    function generateForm(sheet) {
-      // Bạn có thể mở rộng form cho từng sheet sau
-      let form = '';
-      if (sheet === 'Devices') {
-        form = `
-          <div class="form-group"><label>Mã thiết bị</label><input type="text" id="f1" placeholder="DHN-001"></div>
-          <div class="form-group"><label>Mã tòa nhà</label><input type="text" id="f2" placeholder="B001"></div>
-          <div class="form-group"><label>Loại thiết bị</label><input type="text" id="f3" placeholder="Đồng hồ nước sinh hoạt"></div>
-          <div class="form-group"><label>Vị trí</label><input type="text" id="f4" placeholder="Tầng 5 - Căn 502"></div>
-        `;
-      } else {
-        form = `<p>Form đầy đủ cho ${sheet} sẽ được bổ sung ở phiên bản sau.</p>`;
-      }
-      return form;
+    function generateDynamicForm(sheetName) {
+      let html = '';
+      config[sheetName].fields.forEach(field => {
+        html += `<div class="form-group"><label>${field.label}</label>`;
+        if (field.type === 'select') {
+          html += `<select id="${field.key}">`;
+          field.options.forEach(opt => {
+            html += `<option value="${opt}">${opt}</option>`;
+          });
+          html += `</select>`;
+        } else if (field.type === 'textarea') {
+          html += `<textarea id="${field.key}" rows="3"></textarea>`;
+        } else {
+          const readonly = field.readonly ? 'readonly' : '';
+          html += `<input type="${field.type}" id="${field.key}" placeholder="${field.placeholder || ''}" ${readonly}>`;
+        }
+        html += `</div>`;
+      });
+      return html;
     }
 
     async function saveRecord() {
-      let rowData = [];
-      if (currentSheet === 'Devices') {
-        rowData = [
-          document.getElementById('f1').value,
-          document.getElementById('f2').value,
-          document.getElementById('f3').value,
-          document.getElementById('f4').value,
-          '', 'Hoạt động', '', ''   // QRCodeURL, Status, LastReadingDate, Notes
-        ];
-      }
+      const fields = config[currentSheet].fields;
+      const rowData = fields.map(field => {
+        const el = document.getElementById(field.key);
+        return el ? el.value.trim() : '';
+      });
 
       const action = currentEditRowIndex === null ? 'addRow' : 'updateRow';
 
       try {
-        await fetch(SCRIPT_URL, {
+        const res = await fetch(SCRIPT_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -276,10 +237,26 @@
             rowIndex: currentEditRowIndex
           })
         });
-        closeModal();
-        loadTable();
+        const result = await res.json();
+        if (result.success) {
+          alert('✅ Lưu thành công!');
+          closeModal();
+          loadTable(currentSheet);
+        } else {
+          alert('❌ Lỗi: ' + result.error);
+        }
       } catch (err) {
-        alert('Lỗi lưu dữ liệu: ' + err.message);
+        alert('Lỗi kết nối: ' + err.message);
+      }
+    }
+
+    function deleteRecord(sheetName, rowIndex) {
+      if (confirm(`Xóa dòng ${rowIndex} trong ${sheetName}?`)) {
+        fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'deleteRow', sheet: sheetName, rowIndex })
+        }).then(() => loadTable(sheetName));
       }
     }
 
@@ -295,3 +272,4 @@
   </script>
 </body>
 </html>
+   
