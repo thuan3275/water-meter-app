@@ -25,7 +25,6 @@
     .form-group input, .form-group select, .form-group textarea {
       width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem;
     }
-    .form-group input:focus, .form-group select:focus { border-color: #1a73e8; outline: none; }
   </style>
 </head>
 <body>
@@ -47,6 +46,239 @@
   </div>
 
   <script>
+    //const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxUZA6NjTJcoTO3_PYOePErKYcxZTD53mSYYFEf4y3hNfQE4xwupr9-g-zbVaz2FHGNfw/exec';
+    // ↑ ĐÃ DÙNG LINK CỦA BẠN
+    const SCRIPT_ID = 'AKfycbz3vGweqc_SGYYMYvOlBMULWsQa9jsaa_B0-8fpX2sOhSUTK4fIpRkzYVYRpJEkNlbzbA'; 
+    const SCRIPT_URL = 'https://script.google.com/macros/s/' + SCRIPT_ID +'/exec';
+    let currentSheet = '';
+    let currentEditRowIndex = null;
+
+    const config = {
+      Devices: {
+        title: "Thiết bị",
+        fields: [
+          { key: "deviceID", label: "Mã thiết bị", type: "text", required: true, placeholder: "DHN-001" },
+          { key: "buildingID", label: "Mã tòa nhà", type: "text", required: true, placeholder: "B001" },
+          { key: "deviceType", label: "Loại thiết bị", type: "text", required: true, placeholder: "Đồng hồ nước sinh hoạt" },
+          { key: "location", label: "Vị trí", type: "text", required: true, placeholder: "Tầng 5 - Căn 502" },
+          { key: "status", label: "Tình trạng", type: "select", options: ["Hoạt động", "Hỏng", "Bảo trì"], required: true }
+        ]
+      },
+      Buildings: {
+        title: "Tòa nhà",
+        fields: [
+          { key: "buildingID", label: "Mã tòa nhà", type: "text", required: true },
+          { key: "buildingName", label: "Tên tòa nhà", type: "text", required: true },
+          { key: "address", label: "Địa chỉ", type: "text", required: true },
+          { key: "totalFloors", label: "Số tầng", type: "number", required: true },
+          { key: "managerName", label: "Người quản lý", type: "text" }
+        ]
+      },
+      Employees: {
+        title: "Nhân viên",
+        fields: [
+          { key: "employeeID", label: "Mã nhân viên", type: "text", required: true },
+          { key: "fullName", label: "Họ và tên", type: "text", required: true },
+          { key: "phone", label: "Số điện thoại", type: "text", required: true },
+          { key: "email", label: "Email", type: "email" },
+          { key: "role", label: "Vai trò", type: "select", options: ["Nhân viên ghi chỉ số", "Kỹ thuật viên", "Quản lý tòa nhà", "Bảo vệ"], required: true },
+          { key: "buildingID", label: "Tòa nhà phụ trách", type: "text" }
+        ]
+      },
+      MeterReadings: {
+        title: "Ghi chỉ số",
+        fields: [
+          { key: "deviceID", label: "Mã thiết bị", type: "text", required: true },
+          { key: "employeeID", label: "Nhân viên", type: "text", required: true },
+          { key: "meterValue", label: "Chỉ số", type: "number", required: true },
+          { key: "notes", label: "Ghi chú", type: "textarea" }
+        ]
+      },
+      Inspections: {
+        title: "Kiểm tra thiết bị",
+        fields: [
+          { key: "deviceID", label: "Mã thiết bị", type: "text", required: true },
+          { key: "employeeID", label: "Nhân viên", type: "text", required: true },
+          { key: "deviceStatus", label: "Tình trạng", type: "select", options: ["Tốt", "Cần sửa", "Hỏng"], required: true },
+          { key: "notes", label: "Chi tiết kiểm tra", type: "textarea" }
+        ]
+      },
+      Tasks: {
+        title: "Công việc",
+        fields: [
+          { key: "deviceID", label: "Mã thiết bị", type: "text", required: true },
+          { key: "employeeID", label: "Nhân viên thực hiện", type: "text", required: true },
+          { key: "taskType", label: "Loại công việc", type: "select", 
+            options: ["Ghi chỉ số nước", "Ghi chỉ số điện", "Kiểm tra tình trạng", "Bảo trì", "Sửa chữa"], required: true },
+          { key: "dueDate", label: "Hạn hoàn thành", type: "date", required: true },
+          { key: "status", label: "Trạng thái", type: "select", options: ["Chưa làm", "Đang làm", "Hoàn thành"], required: true }
+        ]
+      }
+    };
+
+    function createTabs() {
+      const container = document.getElementById('tabButtons');
+      container.innerHTML = '';
+      Object.keys(config).forEach(key => {
+        const btn = document.createElement('button');
+        btn.className = 'tab-btn';
+        btn.textContent = config[key].title;
+        btn.onclick = () => switchTab(key);
+        container.appendChild(btn);
+      });
+    }
+
+    async function switchTab(sheetName) {
+      currentSheet = sheetName;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        if (b.textContent === config[sheetName].title) b.classList.add('active');
+      });
+      await loadTable(sheetName);
+    }
+
+    async function loadTable(sheetName) {
+      const content = document.getElementById('content');
+      content.innerHTML = `<p>Đang tải ${config[sheetName].title}...</p>`;
+
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=getData&sheet=${sheetName}`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+        });
+
+        const result = await res.json();
+        const data = result.data || result;
+
+        let html = `<h2>${config[sheetName].title}</h2>`;
+        if (!data || data.length < 2) {
+          html += `<p>Chưa có dữ liệu.</p>`;
+        } else {
+          html += `<table><thead><tr>`;
+          data[0].forEach(h => html += `<th>${h}</th>`);
+          html += `<th>Hành động</th></tr></thead><tbody>`;
+
+          for (let i = 1; i < data.length; i++) {
+            html += '<tr>';
+            data[i].forEach(cell => html += `<td>${cell || ''}</td>`);
+            html += `
+              <td>
+                <button class="action-btn edit-btn" onclick="editRecord('${sheetName}', ${i})">Sửa</button>
+                <button class="action-btn delete-btn" onclick="deleteRecord('${sheetName}', ${i})">Xóa</button>
+              </td>`;
+            html += '</tr>';
+          }
+          html += '</tbody></table>';
+        }
+
+        html += `<button onclick="showAddForm('${sheetName}')" 
+                  style="margin-top:20px;background:#1a73e8;color:white;padding:15px;width:100%;border:none;border-radius:10px;font-size:1.1rem;">
+                  + Thêm mới ${config[sheetName].title}
+                </button>`;
+
+        content.innerHTML = html;
+      } catch (err) {
+        content.innerHTML = `<p style="color:red;">Lỗi tải dữ liệu: ${err.message}</p>`;
+        console.error(err);
+      }
+    }
+
+    function showAddForm(sheetName) {
+      currentEditRowIndex = null;
+      document.getElementById('modalTitle').textContent = `Thêm mới ${config[sheetName].title}`;
+      document.getElementById('modalForm').innerHTML = generateDynamicForm(sheetName);
+      document.getElementById('modal').style.display = 'flex';
+    }
+
+    function editRecord(sheetName, rowIndex) {
+      currentEditRowIndex = rowIndex;
+      document.getElementById('modalTitle').textContent = `Sửa ${config[sheetName].title}`;
+      document.getElementById('modalForm').innerHTML = generateDynamicForm(sheetName);
+      document.getElementById('modal').style.display = 'flex';
+      // Có thể load dữ liệu cũ vào form ở phiên bản sau
+    }
+
+    function generateDynamicForm(sheetName) {
+      let html = '';
+      config[sheetName].fields.forEach(field => {
+        html += `<div class="form-group"><label>${field.label}</label>`;
+        if (field.type === 'select') {
+          html += `<select id="${field.key}">`;
+          field.options.forEach(opt => html += `<option value="${opt}">${opt}</option>`);
+          html += `</select>`;
+        } else if (field.type === 'textarea') {
+          html += `<textarea id="${field.key}" rows="3"></textarea>`;
+        } else {
+          const readonly = field.readonly ? 'readonly' : '';
+          html += `<input type="${field.type}" id="${field.key}" placeholder="${field.placeholder || ''}" ${readonly}>`;
+        }
+        html += `</div>`;
+      });
+      return html;
+    }
+
+    async function saveRecord() {
+      const fields = config[currentSheet].fields;
+      const rowData = fields.map(field => {
+        const el = document.getElementById(field.key);
+        return el ? el.value.trim() : '';
+      });
+
+      const action = currentEditRowIndex === null ? 'addRow' : 'updateRow';
+
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: action,
+            sheet: currentSheet,
+            rowData: rowData,
+            rowIndex: currentEditRowIndex
+          })
+        });
+
+        const result = await res.json();
+        if (result.success) {
+          alert('✅ Lưu thành công!');
+          closeModal();
+          loadTable(currentSheet);
+        } else {
+          alert('❌ Lỗi: ' + (result.error || 'Không xác định'));
+        }
+      } catch (err) {
+        alert('Lỗi kết nối: ' + err.message);
+      }
+    }
+
+    function deleteRecord(sheetName, rowIndex) {
+      if (!confirm(`Xóa dòng này trong ${sheetName}?`)) return;
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'deleteRow',
+          sheet: sheetName,
+          rowIndex: rowIndex
+        })
+      })
+      .then(() => loadTable(sheetName))
+      .catch(err => alert('Lỗi xóa: ' + err.message));
+    }
+
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
+
+    // Khởi động
+    window.onload = () => {
+      createTabs();
+      switchTab('Devices');
+    };
+  </script>
+</body>
+</html>
 
   //const SCRIPT_ID = 'AKfycbz3vGweqc_SGYYMYvOlBMULWsQa9jsaa_B0-8fpX2sOhSUTK4fIpRkzYVYRpJEkNlbzbA'; 
   //const SCRIPT_URL = 'https://script.google.com/macros/s/' + SCRIPT_ID +'/exec'; 
