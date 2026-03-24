@@ -21,7 +21,7 @@ h1 {
 }
 
 video, #preview {
-  width: 100%;
+  width: 50%;
   border-radius: 12px;
   background: #000;
   box-shadow: 0 4px 15px rgba(0,0,0,0.15);
