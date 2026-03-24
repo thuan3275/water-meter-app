@@ -144,6 +144,7 @@
       try {
         const url = `${SCRIPT_URL}?action=getData&sheet=${sheetName}`;
         const res = await fetch(url, {
+          redirect: "follow",
           method: 'GET',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' }
         });
@@ -231,6 +232,7 @@
 
       try {
           const res = await fetch(SCRIPT_URL, {
+            redirect: "follow",
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({
@@ -258,6 +260,7 @@
       if (!confirm(`Xóa dòng này trong ${sheetName}?`)) return;
 
       fetch(SCRIPT_URL, {
+        redirect: "follow",
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
