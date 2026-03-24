@@ -144,14 +144,19 @@
       });
       await loadTable(sheetName);
     }
-
     async function loadTable(sheetName) {
       const content = document.getElementById('content');
       content.innerHTML = `<p>Đang tải ${config[sheetName].title}...</p>`;
 
       try {
-        const res = await fetch(`${SCRIPT_URL}?action=getData&sheet=${sheetName}`);
-        const data = await res.json();
+        const res = await fetch(`${SCRIPT_URL}?action=getData&sheet=${sheetName}`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error(result.error || 'Lỗi server');
+
+        const data = result.data || result;   // tương thích cả 2 kiểu response
 
         let html = `<h2>${config[sheetName].title}</h2>`;
         if (data.length < 2) {
@@ -177,7 +182,7 @@
         html += `<button onclick="showAddForm('${sheetName}')" style="margin-top:20px;background:#1a73e8;color:white;padding:15px;width:100%;border:none;border-radius:10px;font-size:1.1rem;">+ Thêm mới ${config[sheetName].title}</button>`;
         content.innerHTML = html;
       } catch (err) {
-        content.innerHTML = `<p style="color:red;">Lỗi: ${err.message}</p>`;
+        content.innerHTML = `<p style="color:red;">Lỗi tải dữ liệu: ${err.message}</p>`;
       }
     }
 
@@ -225,27 +230,25 @@
       });
 
       const action = currentEditRowIndex === null ? 'addRow' : 'updateRow';
-
-      try {
+    try {
         const res = await fetch(SCRIPT_URL, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'text/plain;charset=utf-8'   // ← Thay đổi quan trọng
-          },
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // ← Quan trọng
           body: JSON.stringify({
-            action: action,
+            action: currentEditRowIndex === null ? 'addRow' : 'updateRow',
             sheet: currentSheet,
             rowData: rowData,
             rowIndex: currentEditRowIndex
           })
         });
+    
         const result = await res.json();
         if (result.success) {
           alert('✅ Lưu thành công!');
           closeModal();
           loadTable(currentSheet);
         } else {
-          alert('❌ Lỗi: ' + result.error);
+          alert('❌ Lỗi: ' + (result.error || 'Không xác định'));
         }
       } catch (err) {
         alert('Lỗi kết nối: ' + err.message);
