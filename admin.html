@@ -6,21 +6,21 @@
   <title>Admin Dashboard - Quản lý Đồng Hồ Nước</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    /* Style riêng cho Admin */
     .tab-buttons {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-bottom: 20px;
+      margin: 15px 0;
     }
     .tab-btn {
       flex: 1;
-      min-width: 120px;
-      padding: 12px 10px;
+      min-width: 110px;
+      padding: 12px 8px;
       background: #f1f3f4;
       border: none;
       border-radius: 8px;
       font-weight: 600;
+      font-size: 0.95rem;
       cursor: pointer;
     }
     .tab-btn.active {
@@ -30,13 +30,14 @@
     table {
       width: 100%;
       border-collapse: collapse;
+      font-size: 0.92rem;
       margin-top: 10px;
-      font-size: 0.95rem;
     }
     th, td {
       border: 1px solid #ddd;
-      padding: 10px 8px;
+      padding: 10px 6px;
       text-align: left;
+      vertical-align: top;
     }
     th {
       background: #f8f9fa;
@@ -47,18 +48,18 @@
     .action-btn {
       padding: 6px 10px;
       margin: 2px;
-      font-size: 0.85rem;
       border: none;
       border-radius: 6px;
+      font-size: 0.85rem;
       cursor: pointer;
     }
-    .edit-btn { background: #fbbc05; color: #000; }
+    .edit-btn   { background: #fbbc05; color: #000; }
     .delete-btn { background: #ea4335; color: white; }
     .modal {
       display: none;
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7);
+      background: rgba(0,0,0,0.75);
       z-index: 1000;
       align-items: center;
       justify-content: center;
@@ -67,31 +68,39 @@
       background: white;
       padding: 20px;
       border-radius: 12px;
-      width: 90%;
-      max-width: 500px;
+      width: 92%;
+      max-width: 520px;
       max-height: 90vh;
       overflow-y: auto;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>👨‍💼 Admin Dashboard</h1>
-    <p style="text-align:center; color:#666; margin-bottom:20px;">
-      Quản lý tòa nhà - thiết bị - nhân viên - công việc
+    <p style="text-align:center; color:#555; margin-bottom:15px;">
+      Quản lý toàn bộ hệ thống đồng hồ nước
     </p>
 
-    <!-- Tab Buttons -->
-    <div class="tab-buttons">
-      <button class="tab-btn active" onclick="switchTab(0)">Thiết bị</button>
-      <button class="tab-btn" onclick="switchTab(1)">Tòa nhà</button>
-      <button class="tab-btn" onclick="switchTab(2)">Nhân viên</button>
-      <button class="tab-btn" onclick="switchTab(3)">Ghi chỉ số</button>
-      <button class="tab-btn" onclick="switchTab(4)">Kiểm tra</button>
-      <button class="tab-btn" onclick="switchTab(5)">Công việc</button>
-    </div>
+    <!-- Tab -->
+    <div class="tab-buttons" id="tabButtons"></div>
 
-    <!-- Content Area -->
+    <!-- Nội dung bảng -->
     <div id="content"></div>
   </div>
 
@@ -101,121 +110,177 @@
       <h2 id="modalTitle">Thêm mới</h2>
       <div id="modalForm"></div>
       <br>
-      <button onclick="saveForm()" style="background:#34a853; color:white; padding:12px 20px; border:none; border-radius:8px; width:100%;">Lưu</button>
-      <button onclick="closeModal()" style="background:#ddd; margin-top:10px; padding:12px 20px; border:none; border-radius:8px; width:100%;">Hủy</button>
+      <button onclick="saveRecord()" style="background:#34a853; color:white; padding:14px; width:100%; border:none; border-radius:10px; font-size:1.1rem;">Lưu</button>
+      <button onclick="closeModal()" style="background:#ddd; margin-top:10px; padding:14px; width:100%; border:none; border-radius:10px;">Hủy</button>
     </div>
   </div>
 
   <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJqikHXE37mOQKe89JaZlzkJ9zDAva0M6PC4eapGAFhOsMrxBhiiSl282pQBNg63-T7w/exec';
-    let currentTab = 0;
-    let currentEditId = null;
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJqikHXE37mOQKe89JaZlzkJ9zDAva0M6PC4eapGAFhOsMrxBhiiSl282pQBNg63-T7w/exec'; 
+    // ← THAY BẰNG LINK WEB APP THỰC TẾ CỦA BẠN
 
-    const tabs = [
-      { name: 'Devices', title: 'Quản lý Thiết bị' },
-      { name: 'Buildings', title: 'Quản lý Tòa nhà' },
-      { name: 'Employees', title: 'Quản lý Nhân viên' },
-      { name: 'MeterReadings', title: 'Lịch sử Ghi chỉ số' },
-      { name: 'Inspections', title: 'Lịch sử Kiểm tra' },
-      { name: 'Tasks', title: 'Quản lý Công việc' }
+    let currentSheet = '';
+    let currentEditRowIndex = null;
+
+    const sheetsConfig = [
+      { name: 'Devices',       title: 'Thiết bị',       icon: '📟' },
+      { name: 'Buildings',     title: 'Tòa nhà',        icon: '🏢' },
+      { name: 'Employees',     title: 'Nhân viên',      icon: '👤' },
+      { name: 'MeterReadings', title: 'Ghi chỉ số',     icon: '📊' },
+      { name: 'Inspections',   title: 'Kiểm tra',       icon: '🔧' },
+      { name: 'Tasks',         title: 'Công việc',      icon: '✅' }
     ];
 
-    async function fetchData(sheetName) {
-      try {
-        const res = await fetch(SCRIPT_URL + `?action=getData&sheet=${sheetName}`);
-        return await res.json();
-      } catch (e) {
-        console.error(e);
-        return [];
-      }
-    }
-
-    function switchTab(tabIndex) {
-      currentTab = tabIndex;
-      document.querySelectorAll('.tab-btn').forEach((btn, i) => {
-        btn.classList.toggle('active', i === tabIndex);
+    // Tạo các tab
+    function createTabs() {
+      const container = document.getElementById('tabButtons');
+      container.innerHTML = '';
+      sheetsConfig.forEach((sheet, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'tab-btn';
+        btn.innerHTML = `${sheet.icon} ${sheet.title}`;
+        btn.onclick = () => switchTab(sheet.name);
+        if (index === 0) btn.classList.add('active');
+        container.appendChild(btn);
       });
-      loadTab();
     }
 
-    async function loadTab() {
-      const sheet = tabs[currentTab].name;
-      const data = await fetchData(sheet);
-      let html = `<h2>${tabs[currentTab].title}</h2>`;
+    async function switchTab(sheetName) {
+      currentSheet = sheetName;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        if (btn.textContent.includes(sheetsConfig.find(s => s.name === sheetName).title)) {
+          btn.classList.add('active');
+        }
+      });
+      await loadTable();
+    }
 
-      if (data.length === 0) {
-        html += '<p>Chưa có dữ liệu.</p>';
-      } else {
+    async function loadTable() {
+      const content = document.getElementById('content');
+      content.innerHTML = `<p>Đang tải dữ liệu ${currentSheet}...</p>`;
+
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=getData&sheet=${currentSheet}`);
+        const data = await res.json();
+
+        if (!data || data.length === 0) {
+          content.innerHTML = `<p>Chưa có dữ liệu.</p>`;
+          return;
+        }
+
+        let html = `<h2>${sheetsConfig.find(s => s.name === currentSheet).icon} ${sheetsConfig.find(s => s.name === currentSheet).title}</h2>`;
         html += `<table><thead><tr>`;
-        
+
         // Header
-        data[0].forEach(header => {
-          html += `<th>${header}</th>`;
-        });
+        data[0].forEach(h => html += `<th>${h}</th>`);
         html += `<th>Hành động</th></tr></thead><tbody>`;
 
-        // Data rows
+        // Dữ liệu
         for (let i = 1; i < data.length; i++) {
           html += '<tr>';
           data[i].forEach(cell => {
-            html += `<td>${cell || ''}</td>`;
+            html += `<td>${cell !== null && cell !== undefined ? cell : ''}</td>`;
           });
           html += `
             <td>
-              <button class="action-btn edit-btn" onclick="editRow('${sheet}', ${i})">Sửa</button>
-              <button class="action-btn delete-btn" onclick="deleteRow('${sheet}', ${i})">Xóa</button>
+              <button class="action-btn edit-btn" onclick="editRecord(${i})">Sửa</button>
+              <button class="action-btn delete-btn" onclick="deleteRecord(${i})">Xóa</button>
             </td>`;
           html += '</tr>';
         }
         html += '</tbody></table>';
+
+        // Nút thêm mới
+        html += `
+          <button onclick="showAddForm()" 
+                  style="margin-top:20px; background:#1a73e8; color:white; padding:15px; width:100%; border:none; border-radius:10px; font-size:1.1rem;">
+            + Thêm mới ${sheetsConfig.find(s => s.name === currentSheet).title}
+          </button>`;
+
+        content.innerHTML = html;
+      } catch (err) {
+        content.innerHTML = `<p style="color:red;">Lỗi tải dữ liệu: ${err.message}</p>`;
       }
-
-      // Nút thêm mới
-      html += `<button onclick="showAddForm('${sheet}')" style="margin-top:20px; background:#1a73e8; color:white; padding:14px; width:100%; border:none; border-radius:10px; font-size:1.1rem;">
-        + Thêm mới ${tabs[currentTab].title.replace('Quản lý ', '')}
-      </button>`;
-
-      document.getElementById('content').innerHTML = html;
     }
 
-    // Hiện modal thêm/sửa
-    function showAddForm(sheet) {
-      currentEditId = null;
-      document.getElementById('modalTitle').textContent = 'Thêm mới';
-      document.getElementById('modalForm').innerHTML = getFormHTML(sheet);
+    function showAddForm() {
+      currentEditRowIndex = null;
+      document.getElementById('modalTitle').textContent = `Thêm mới ${currentSheet}`;
+      document.getElementById('modalForm').innerHTML = generateForm(currentSheet);
       document.getElementById('modal').style.display = 'flex';
     }
 
-    function editRow(sheet, rowIndex) {
-      // TODO: Có thể mở rộng sau để load dữ liệu cũ vào form
-      alert('Chức năng sửa chi tiết sẽ được cập nhật ở phiên bản sau.\n\nHiện tại bạn có thể xóa và thêm mới.');
+    function editRecord(rowIndex) {
+      currentEditRowIndex = rowIndex;
+      document.getElementById('modalTitle').textContent = `Sửa ${currentSheet}`;
+      document.getElementById('modalForm').innerHTML = generateForm(currentSheet);
+      // TODO: Load dữ liệu cũ vào form (có thể nâng cao sau)
+      document.getElementById('modal').style.display = 'flex';
     }
 
-    function deleteRow(sheet, rowIndex) {
-      if (confirm('Bạn có chắc muốn xóa dòng này không?')) {
-        // Gọi Apps Script để xóa (bạn cần thêm hàm deleteRow trong Code.gs)
-        alert('Đã xóa dòng ' + rowIndex);
-        loadTab();
+    function deleteRecord(rowIndex) {
+      if (confirm(`Bạn có chắc chắn muốn xóa dòng ${rowIndex} không?`)) {
+        fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'deleteRow',
+            sheet: currentSheet,
+            rowIndex: rowIndex
+          })
+        })
+        .then(() => loadTable())
+        .catch(err => alert('Lỗi xóa: ' + err.message));
       }
     }
 
-    function getFormHTML(sheet) {
+    function generateForm(sheet) {
+      // Bạn có thể mở rộng form cho từng sheet sau
+      let form = '';
       if (sheet === 'Devices') {
-        return `
-          <input type="text" id="formDeviceID" placeholder="Mã thiết bị (DHN-001)" style="width:100%; padding:12px; margin:8px 0;">
-          <input type="text" id="formBuildingID" placeholder="Mã tòa nhà (B001)" style="width:100%; padding:12px; margin:8px 0;">
-          <input type="text" id="formDeviceType" placeholder="Loại thiết bị" style="width:100%; padding:12px; margin:8px 0;">
-          <input type="text" id="formLocation" placeholder="Vị trí" style="width:100%; padding:12px; margin:8px 0;">
+        form = `
+          <div class="form-group"><label>Mã thiết bị</label><input type="text" id="f1" placeholder="DHN-001"></div>
+          <div class="form-group"><label>Mã tòa nhà</label><input type="text" id="f2" placeholder="B001"></div>
+          <div class="form-group"><label>Loại thiết bị</label><input type="text" id="f3" placeholder="Đồng hồ nước sinh hoạt"></div>
+          <div class="form-group"><label>Vị trí</label><input type="text" id="f4" placeholder="Tầng 5 - Căn 502"></div>
         `;
+      } else {
+        form = `<p>Form đầy đủ cho ${sheet} sẽ được bổ sung ở phiên bản sau.</p>`;
       }
-      // Có thể mở rộng cho các sheet khác sau
-      return `<p>Form cho ${sheet} sẽ được bổ sung ở phiên bản sau.</p>`;
+      return form;
     }
 
-    function saveForm() {
-      alert('Chức năng lưu form đang được phát triển.\n\nHiện tại bạn có thể quản lý trực tiếp trên Google Sheet.');
-      closeModal();
-      loadTab();
+    async function saveRecord() {
+      let rowData = [];
+      if (currentSheet === 'Devices') {
+        rowData = [
+          document.getElementById('f1').value,
+          document.getElementById('f2').value,
+          document.getElementById('f3').value,
+          document.getElementById('f4').value,
+          '', 'Hoạt động', '', ''   // QRCodeURL, Status, LastReadingDate, Notes
+        ];
+      }
+
+      const action = currentEditRowIndex === null ? 'addRow' : 'updateRow';
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: action,
+            sheet: currentSheet,
+            rowData: rowData,
+            rowIndex: currentEditRowIndex
+          })
+        });
+        closeModal();
+        loadTable();
+      } catch (err) {
+        alert('Lỗi lưu dữ liệu: ' + err.message);
+      }
     }
 
     function closeModal() {
@@ -224,7 +289,8 @@
 
     // Khởi động
     window.onload = () => {
-      switchTab(0); // Mặc định mở tab Thiết bị
+      createTabs();
+      switchTab('Devices');
     };
   </script>
 </body>
