@@ -1,5 +1,5 @@
 // ==================== CẤU HÌNH ====================
-const SCRIPT_ID = 'AKfycbz3vGweqc_SGYYMYvOlBMULWsQa9jsaa_B0-8fpX2sOhSUTK4fIpRkzYVYRpJEkNlbzbA';
+const SCRIPT_ID = 'AKfycbwuBGDoYpmBM7DiT3pgujKiadp0B6Vefy0z-iCSVDnXoSo3kJYmdX8CEhdWDlE4vCScmQ';
 const SCRIPT_URL = 'https://script.google.com/macros/s/'+ SCRIPT_ID +'/exec'; 
 // ← THAY BẰNG LINK WEB APP THỰC TẾ
 
