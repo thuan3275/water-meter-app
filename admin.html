@@ -254,17 +254,20 @@
         alert('Lỗi kết nối: ' + err.message);
       }
     }
-
     function deleteRecord(sheetName, rowIndex) {
-      if (confirm(`Xóa dòng ${rowIndex} trong ${sheetName}?`)) {
-        fetch(SCRIPT_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'text/plain;charset=utf-8'   // ← Thay đổi quan trọng
-          },
-          body: JSON.stringify({ action: 'deleteRow', sheet: sheetName, rowIndex })
-        }).then(() => loadTable(sheetName));
-      }
+      if (!confirm(`Xóa dòng này?`)) return;
+    
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'deleteRow',
+          sheet: sheetName,
+          rowIndex: rowIndex
+        })
+      })
+      .then(() => loadTable(sheetName))
+      .catch(err => alert('Lỗi xóa: ' + err.message));
     }
 
     function closeModal() {
