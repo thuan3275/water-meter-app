@@ -181,8 +181,11 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
 // Load danh sách thiết bị (giữ nguyên như trước)
 async function loadDevices() {
   try {
-    const res = await fetch(SCRIPT_URL + '?action=getAllDevices');
-    const data = await res.json();
+    const res = await fetch(SCRIPT_URL + '?action=getAllDevices', {
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+    });
+    const result = await res.json();
+    const data = result.data || result;
     const select = document.getElementById('deviceSelect');
     select.innerHTML = '<option value="">-- Chọn thiết bị --</option>';
     data.slice(1).forEach(row => {
@@ -192,7 +195,7 @@ async function loadDevices() {
       select.appendChild(opt);
     });
   } catch (e) {
-    console.error(e);
+    console.error('Load devices error:', e);
   }
 }
 
